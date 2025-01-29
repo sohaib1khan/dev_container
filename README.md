@@ -6,7 +6,7 @@ This project provides a **fully equipped development container** (`dev-container
 
 - **Programming Languages:** Python, Go
 - **Infrastructure Tools:** Terraform, Ansible, Kubernetes CLI (kubectl), Skaffold, AWS CLI, Azure CLI
-- **Development Utilities:** Vim, Nano, fzf (with Ctrl+R bindings), jq, htop, tree
+- **Development Utilities:** Vim, Nano, fzf, jq, htop, tree
 - **Security & SSH:** SSH pass, PowerShell
 - **Custom CLI Enhancements:** pyenv, kubectx, kubens
 
