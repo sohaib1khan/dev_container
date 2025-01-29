@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dev-container
+    volumes:
+      - $PWD:/workspace
+      - ~/.aws:/home/devuser/.aws
+      - ~/.kube:/home/devuser/.kube
+      - ~/.bashrc:/home/devuser/.bashrc
+      - ~/.ssh:/home/devuser/.ssh
+      - ~/.vimrc:/home/devuser/.vimrc
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000" # Example for a Node.js server
+      - "8080:8080" # Example for a custom tool
