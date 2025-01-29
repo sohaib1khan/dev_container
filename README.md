@@ -22,7 +22,7 @@ Ensure you have the following installed:
 ### 2️⃣ **Clone the Repository**
 
 ```sh
- git clone <your-repository-url>
+ git clone https://github.com/sohaib1khan/dev_container.git
  cd Dev_Container_workspace
 ```
 
