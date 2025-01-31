@@ -9,6 +9,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN useradd -ms /bin/bash devuser && \
     mkdir -p /home/devuser && chown -R devuser:devuser /home/devuser
 
+    # Add devuser to the docker group to allow it to use Docker inside the container
+RUN groupadd -r docker && usermod -aG docker devuser
+
 # Install base tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
@@ -47,7 +50,6 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsof
     rm packages-microsoft-prod.deb
 
 # Install Vim Plug for devuser
-# Run Vim and Check Plugins Inside the container, run: vim +PlugInstall
 USER devuser
 RUN mkdir -p /home/devuser/.vim/autoload && \
     curl -fLo /home/devuser/.vim/autoload/plug.vim --create-dirs \
@@ -78,28 +80,12 @@ RUN curl -sLo kubectx https://github.com/ahmetb/kubectx/releases/latest/download
     curl -sLo kubens https://github.com/ahmetb/kubectx/releases/latest/download/kubens && \
     chmod +x kubens && mv kubens /usr/local/bin/
 
-# Install and configure fzf
-RUN echo 'export FZF_DEFAULT_COMMAND="find ."' >> /home/devuser/.bashrc && \
-    echo 'export FZF_CTRL_R_OPTS="--preview '\''echo {} | cut -d'\'' '\'' '\'' -f3-'\''" --preview-window=down:3:wrap"' >> /home/devuser/.bashrc && \
-    echo 'source /usr/share/doc/fzf/examples/key-bindings.bash' >> /home/devuser/.bashrc && \
-    echo 'source /usr/share/doc/fzf/examples/completion.bash' >> /home/devuser/.bashrc && \
-    chown -R devuser:devuser /home/devuser
-
-# Install pyenv with necessary dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    make build-essential libssl-dev zlib1g-dev \
-    libbz2-dev libreadline-dev libsqlite3-dev \
-    wget curl llvm libncurses5-dev xz-utils tk-dev \
-    libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev && \
-    curl https://pyenv.run | bash && \
-    echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> /home/devuser/.bashrc && \
-    echo 'eval "$(pyenv init --path)"' >> /home/devuser/.bashrc && \
-    echo 'eval "$(pyenv virtualenv-init -)"' >> /home/devuser/.bashrc && \
-    chown -R devuser:devuser /home/devuser
+# Ensure ~/.bashrc exists if it's missing
+RUN echo 'if [ ! -f ~/.bashrc ]; then cp /etc/skel/.bashrc ~/.bashrc; fi' >> /home/devuser/.bashrc
 
 # Set non-root user
 USER devuser
 WORKDIR /workspace
 
 # Set default shell and load .bashrc on startup
-CMD ["/bin/bash", "-c", "source ~/.bashrc && exec bash"]
+CMD ["/bin/bash", "-c", "[ -f ~/.bashrc ] || cp /etc/skel/.bashrc ~/.bashrc; source ~/.bashrc && exec bash"]

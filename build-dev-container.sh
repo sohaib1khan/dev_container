@@ -4,6 +4,22 @@
 IMAGE_NAME="dev-container-image"
 CONTAINER_NAME="dev-container"
 
+# Function to check if Docker is installed
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        echo "❌ Docker is not installed or not in your PATH. Please install Docker and try again."
+        exit 1
+    fi
+}
+
+# Function to check if Docker is running
+check_docker_running() {
+    if ! docker info &> /dev/null; then
+        echo "⚠️ Docker is not running. Please start Docker and try again."
+        exit 1
+    fi
+}
+
 # Function to display the menu
 display_menu() {
     echo "=============================================="
@@ -39,10 +55,10 @@ check_running_container() {
 
 # Function to build the image
 build_image() {
-    echo "Building Docker image: $IMAGE_NAME..."
+    echo "🔨 Building Docker image: $IMAGE_NAME..."
     docker build -t $IMAGE_NAME .
     if [ $? -ne 0 ]; then
-        echo "Error: Docker image build failed!"
+        echo "❌ Error: Docker image build failed! Check your Dockerfile and try again."
         exit 1
     fi
     echo "✅ Docker image built successfully."
@@ -58,10 +74,21 @@ start_container() {
         echo "🚀 Starting a new container..."
         docker compose up -d
     fi
+
+    # Wait for 2 seconds and check if the container is still running
+    sleep 2
+    check_running_container
     if [ $? -ne 0 ]; then
-        echo "❌ Error: Failed to start the container!"
+        echo "❌ Error: Container failed to stay running!"
+        echo "📜 Checking container logs for errors..."
+        docker logs $CONTAINER_NAME 2>/dev/null
+        echo "🔍 Possible issues:"
+        echo "  - The container may have crashed due to a missing dependency."
+        echo "  - Check volume mounts to ensure necessary files exist."
+        echo "  - Run 'docker compose up' manually to see more detailed errors."
         exit 1
     fi
+
     echo "✅ Container started successfully."
 }
 
@@ -73,6 +100,9 @@ exec_into_container() {
         docker exec -it $CONTAINER_NAME bash
     else
         echo "⚠️ Error: The container is not running!"
+        echo "📜 Checking logs..."
+        docker logs $CONTAINER_NAME 2>/dev/null
+        echo "💡 Try running: docker start $CONTAINER_NAME"
     fi
 }
 
@@ -80,7 +110,7 @@ exec_into_container() {
 pause_unpause_stop_container() {
     check_running_container
     if [ $? -eq 0 ]; then
-        echo "What would you like to do?"
+        echo "🔧 What would you like to do?"
         echo "1) Pause the container"
         echo "2) Unpause the container"
         echo "3) Stop the container"
@@ -104,6 +134,7 @@ pause_unpause_stop_container() {
         esac
     else
         echo "⚠️ Error: The container is not running!"
+        echo "💡 Try running: docker start $CONTAINER_NAME"
     fi
 }
 
@@ -125,6 +156,10 @@ cleanup_docker() {
         docker system prune -f
     fi
 }
+
+# Run checks before starting the script
+check_docker
+check_docker_running
 
 # Main menu loop
 while true; do

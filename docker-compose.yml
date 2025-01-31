@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   dev:
     build:
@@ -9,14 +8,23 @@ services:
       - $PWD:/workspace
       - ~/.aws:/home/devuser/.aws
       - ~/.kube:/home/devuser/.kube
-      - ~/.bashrc:/home/devuser/.bashrc
+      - ~/.minikube:/home/devuser/.minikube
       - ~/.ssh:/home/devuser/.ssh
       - ~/.vimrc:/home/devuser/.vimrc
+      - ~/.vim:/home/devuser/.vim
+      - /var/run/docker.sock:/var/run/docker.sock  # Allows running Docker commands on the host
+      - /home/labmachine/dockerApps:/home/devuser/dockerApps
+      - /home/labmachine/Python:/home/devuser/Python
+      - /home/labmachine/K8s_stuff:/home/devuser/K8s_stuff
+    security_opt:
+      - label=disable 
     working_dir: /workspace
     stdin_open: true
     tty: true
     environment:
       NODE_ENV: development
     ports:
-      - "3000:3000" # Example for a Node.js server
-      - "8080:8080" # Example for a custom tool
+      - "3000:3000"
+      - "8080:8080"
+      - "5009:5009"
+      - "8989:8989"
