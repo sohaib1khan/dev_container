@@ -124,3 +124,7 @@ This **Dev Container** is a **preconfigured development environment** for DevOps
 * * *
 
 🚀 **Start coding inside your isolated, portable dev environment today!**
+
+## **Demo**
+
+![Demo Image](images/demo.png)
