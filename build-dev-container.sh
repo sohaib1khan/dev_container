@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Define image and container names
+# Maintainer: Sohaib
+
+# Define image and container names.
 IMAGE_NAME="dev-container-image"
 CONTAINER_NAME="dev-container"
 
@@ -20,19 +22,86 @@ check_docker_running() {
     fi
 }
 
-# Function to display the menu
+# Function to display Docker container status with ASCII art and colors
+display_container_status() {
+    local status_info=$(docker ps -a --filter "name=$CONTAINER_NAME" --format "{{.Names}}: {{.Status}}, Ports: {{.Ports}}")
+    local container_id=$(docker ps -aqf "name=$CONTAINER_NAME")
+    local container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $CONTAINER_NAME 2>/dev/null)
+    local image_info=$(docker inspect --format='Image: {{.Config.Image}}' $CONTAINER_NAME 2>/dev/null)
+    local uptime_info=$(docker ps --filter "name=$CONTAINER_NAME" --format "Uptime: {{.RunningFor}}")
+    local status=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME 2>/dev/null)
+
+    echo -e "\e[1;34m==============================================\e[0m"
+    echo -e "\e[1;36m      ☁️  Cloud Container Status Dashboard ☁️ \e[0m"
+    echo -e "\e[1;34m==============================================\e[0m"
+    echo -e "\e[1;33mMaintainer:\e[0m Sohaib"
+
+    cat << 'EOF'
+        .--.
+     .-(    ).
+    (___.__)__)  🚀
+EOF
+
+    if [ -n "$status_info" ]; then
+        echo -e "📦 \e[1;32m$status_info\e[0m"
+        echo -e "🆔 Container ID: \e[1;35m${container_id:-N/A}\e[0m"
+        echo -e "🌐 IP Address: \e[1;36m${container_ip:-N/A}\e[0m"
+        echo -e "📋 $image_info"
+        echo -e "⏱ $uptime_info"
+        echo -e "🔍 Status: \e[1;33m${status:-Unknown}\e[0m"
+    else
+        echo "❌ No container named '$CONTAINER_NAME' found."
+    fi
+    echo -e "\e[1;34m==============================================\e[0m"
+}
+
+# Function to display the menu with arrow key navigation
 display_menu() {
-    echo "=============================================="
-    echo " Dev Container Manager"
-    echo "=============================================="
-    echo "1) Build or Rebuild the Container (if needed)"
-    echo "2) Start the Container (reuse if already exists)"
-    echo "3) Access the Container Shell (exec into it)"
-    echo "4) Pause, Unpause, or Stop the Container"
-    echo "5) Cleanup Docker (Remove Container & Image, Keep Data)"
-    echo "6) Exit"
-    echo "=============================================="
-    read -p "Select an option: " choice
+    local options=(
+        "Build or Rebuild the Container (if needed)"
+        "Start the Container (reuse if already exists)"
+        "Access the Container Shell (exec into it)"
+        "Pause, Unpause, or Stop the Container"
+        "Cleanup Docker (Remove Container & Image, Keep Data)"
+        "Exit"
+    )
+    local choice=0
+
+    while true; do
+        clear
+        display_container_status
+
+        for i in "${!options[@]}"; do
+            if [ $i -eq $choice ]; then
+                echo -e "\e[1;32m> ${options[$i]}\e[0m"
+            else
+                echo "  ${options[$i]}"
+            fi
+        done
+
+        read -rsn1 input
+
+        case "$input" in
+            $'\x1b') # Escape character
+                read -rsn2 -t 0.1 input
+                case "$input" in
+                    "[A") # Up arrow
+                        ((choice--))
+                        ((choice < 0)) && choice=$((${#options[@]} - 1))
+                        ;;
+                    "[B") # Down arrow
+                        ((choice++))
+                        ((choice >= ${#options[@]})) && choice=0
+                        ;;
+                esac
+                ;;
+            "") # Enter key
+                break
+                ;;
+        esac
+    done
+
+    return $choice
 }
 
 # Function to check if the image exists
@@ -75,34 +144,27 @@ start_container() {
         docker compose up -d
     fi
 
-    # Wait for 2 seconds and check if the container is still running
     sleep 2
     check_running_container
     if [ $? -ne 0 ]; then
         echo "❌ Error: Container failed to stay running!"
-        echo "📜 Checking container logs for errors..."
         docker logs $CONTAINER_NAME 2>/dev/null
-        echo "🔍 Possible issues:"
-        echo "  - The container may have crashed due to a missing dependency."
-        echo "  - Check volume mounts to ensure necessary files exist."
-        echo "  - Run 'docker compose up' manually to see more detailed errors."
         exit 1
     fi
-
     echo "✅ Container started successfully."
 }
 
-# Function to exec into the container
-exec_into_container() {
+# Function to exec into the container with static dashboard
+display_static_dashboard_and_exec() {
     check_running_container
     if [ $? -eq 0 ]; then
-        echo "💻 Accessing the container shell..."
+        clear
+        display_container_status
+        echo -e "\e[1;36m💻 Opening container shell below...\e[0m"
+        echo -e "\e[1;34m----------------------------------------------\e[0m"
         docker exec -it $CONTAINER_NAME bash
     else
         echo "⚠️ Error: The container is not running!"
-        echo "📜 Checking logs..."
-        docker logs $CONTAINER_NAME 2>/dev/null
-        echo "💡 Try running: docker start $CONTAINER_NAME"
     fi
 }
 
@@ -110,51 +172,35 @@ exec_into_container() {
 pause_unpause_stop_container() {
     check_running_container
     if [ $? -eq 0 ]; then
-        echo "🔧 What would you like to do?"
-        echo "1) Pause the container"
-        echo "2) Unpause the container"
-        echo "3) Stop the container"
-        read -p "Select an option (1/2/3): " action
-        case $action in
-            1)
-                docker pause $CONTAINER_NAME
-                echo "⏸ Container paused."
-                ;;
-            2)
-                docker unpause $CONTAINER_NAME
-                echo "▶️ Container resumed."
-                ;;
-            3)
-                docker stop $CONTAINER_NAME
-                echo "🛑 Container stopped."
-                ;;
-            *)
-                echo "❌ Invalid choice. Please select 1, 2, or 3."
-                ;;
-        esac
+        PS3="Select an option: "
+        select action in "Pause" "Unpause" "Stop" "Cancel"; do
+            case $REPLY in
+                1) docker pause $CONTAINER_NAME; echo "⏸ Container paused."; break;;
+                2) docker unpause $CONTAINER_NAME; echo "▶️ Container resumed."; break;;
+                3) docker stop $CONTAINER_NAME; echo "🛑 Container stopped."; break;;
+                4) break;;
+                *) echo "❌ Invalid choice.";;
+            esac
+        done
     else
         echo "⚠️ Error: The container is not running!"
-        echo "💡 Try running: docker start $CONTAINER_NAME"
     fi
 }
 
-# Function to clean up Docker (remove containers, images, and networks but keep volumes)
+# Function to clean up Docker
 cleanup_docker() {
     check_existing_container
     if [ $? -eq 0 ]; then
-        echo "⚠️ A container is currently running."
         read -p "Are you sure you want to remove it? (y/n): " confirm
         if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-            echo "🛑 Cleanup aborted."
             return
         fi
         docker compose down --rmi all --remove-orphans
         docker system prune -f
-        echo "🧹 Cleanup complete. Mounted data remains intact."
     else
-        echo "🧹 No existing container found. Cleaning up Docker resources..."
         docker system prune -f
     fi
+    echo "🧹 Cleanup complete."
 }
 
 # Run checks before starting the script
@@ -164,40 +210,35 @@ check_docker_running
 # Main menu loop
 while true; do
     display_menu
+    choice=$?
+
     case $choice in
-        1)
+        0)
             check_existing_image
             if [ $? -eq 0 ]; then
-                echo "⚙️ Existing image found. Do you want to rebuild it?"
-                read -p "(y/n): " rebuild_choice
-                if [[ "$rebuild_choice" == "y" || "$rebuild_choice" == "Y" ]]; then
-                    build_image
-                else
-                    echo "✅ Using existing image."
-                fi
+                read -p "Rebuild image? (y/n): " rebuild_choice
+                [[ "$rebuild_choice" =~ [Yy] ]] && build_image
             else
                 build_image
             fi
             start_container
             ;;
-        2)
+        1)
             start_container
             ;;
-        3)
-            exec_into_container
+        2)
+            display_static_dashboard_and_exec
             ;;
-        4)
+        3)
             pause_unpause_stop_container
             ;;
-        5)
+        4)
             cleanup_docker
             ;;
-        6)
+        5)
             echo "👋 Exiting script."
             exit 0
             ;;
-        *)
-            echo "❌ Invalid choice. Please select a valid option."
-            ;;
     esac
+
 done
