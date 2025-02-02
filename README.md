@@ -127,4 +127,4 @@ This **Dev Container** is a **preconfigured development environment** for DevOps
 
 ## **Demo**
 
-![Demo Image](images/dev_container_demo.png)
+![Demo Image](media/dev_container_demo.png)
