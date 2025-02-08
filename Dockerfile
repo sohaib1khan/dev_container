@@ -48,6 +48,10 @@ RUN CTOP_VERSION=$(curl -s https://api.github.com/repos/bcicen/ctop/releases/lat
 # Install Python 3 Tkinter
 RUN apt-get update && apt-get install -y python3-tk
 
+# Install kube-shell for an interactive Kubernetes CLI
+RUN pip3 install kube-shell
+
+
 # Install Terraform using the official HashiCorp repository
 RUN wget -qO - https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list && \
