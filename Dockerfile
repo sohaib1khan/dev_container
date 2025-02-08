@@ -48,9 +48,9 @@ RUN CTOP_VERSION=$(curl -s https://api.github.com/repos/bcicen/ctop/releases/lat
 # Install Python 3 Tkinter
 RUN apt-get update && apt-get install -y python3-tk
 
-# Install kube-shell for an interactive Kubernetes CLI
-RUN pip3 install kube-shell
 
+# Install kube-shell and fix PyYAML version
+RUN pip3 install kube-shell PyYAML==5.3.1
 
 # Install Terraform using the official HashiCorp repository
 RUN wget -qO - https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
@@ -83,6 +83,18 @@ ENV PATH="/usr/local/go/bin:$PATH"
 # Install K9s
 RUN wget -O k9s.deb https://github.com/derailed/k9s/releases/download/v0.32.7/k9s_linux_amd64.deb && \
     apt install -y ./k9s.deb && rm k9s.deb
+
+# Install k8sgpt - AI-powered Kubernetes troubleshooting tool
+RUN set -eux; \
+    K8SGPT_VERSION=$(curl -s https://api.github.com/repos/k8sgpt-ai/k8sgpt/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
+    echo "Installing k8sgpt version: $K8SGPT_VERSION" && \
+    curl -fSL -o k8sgpt_amd64.deb "https://github.com/k8sgpt-ai/k8sgpt/releases/download/v${K8SGPT_VERSION}/k8sgpt_amd64.deb" && \
+    dpkg -i k8sgpt_amd64.deb && \
+    rm -f k8sgpt_amd64.deb && \
+    k8sgpt version
+
+
+
 
 # Install Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
