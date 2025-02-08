@@ -38,6 +38,16 @@ RUN curl -fsSL https://aka.ms/InstallAzureCLIDeb | bash && \
     curl -sLo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
     chmod +x skaffold && mv skaffold /usr/local/bin/
 
+
+# Install Ctop
+RUN CTOP_VERSION=$(curl -s https://api.github.com/repos/bcicen/ctop/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
+    curl -fsSL -o /usr/local/bin/ctop "https://github.com/bcicen/ctop/releases/download/v${CTOP_VERSION}/ctop-${CTOP_VERSION}-linux-amd64" && \
+    chmod +x /usr/local/bin/ctop
+
+
+# Install Python 3 Tkinter
+RUN apt-get update && apt-get install -y python3-tk
+
 # Install Terraform using the official HashiCorp repository
 RUN wget -qO - https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list && \
@@ -66,7 +76,7 @@ RUN GO_VERSION=$(curl -s https://go.dev/dl/ | grep -oP 'go\d+\.\d+\.\d+' | head 
     rm go.tar.gz
 ENV PATH="/usr/local/go/bin:$PATH"
 
-# Install K9s 
+# Install K9s
 RUN wget -O k9s.deb https://github.com/derailed/k9s/releases/download/v0.32.7/k9s_linux_amd64.deb && \
     apt install -y ./k9s.deb && rm k9s.deb
 
