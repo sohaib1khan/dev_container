@@ -6,16 +6,8 @@ services:
     container_name: dev-container
     volumes:
       - $PWD:/workspace
-      - ~/.aws:/home/devuser/.aws
-      - ~/.kube:/home/devuser/.kube
-      - ~/.minikube:/home/devuser/.minikube
       - ~/.ssh:/home/devuser/.ssh
-      - ~/.vimrc:/home/devuser/.vimrc
-      - ~/.vim:/home/devuser/.vim
       - /var/run/docker.sock:/var/run/docker.sock  # Allows running Docker commands on the host
-      - /home/labmachine/dockerApps:/home/devuser/dockerApps
-      - /home/labmachine/Python:/home/devuser/Python
-      - /home/labmachine/K8s_stuff:/home/devuser/K8s_stuff
     security_opt:
       - label=disable 
     working_dir: /workspace
