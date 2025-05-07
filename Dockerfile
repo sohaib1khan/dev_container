@@ -26,6 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sshpass \
     nodejs \
     make \
+    nginx \
+    jq \
     fzf \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
