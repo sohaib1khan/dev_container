@@ -1,5 +1,17 @@
 # Development Container (Dev-Container)
 
+<div align="center">
+
+[![Dev Container Interactive Documentation](https://img.shields.io/badge/🐳_INTERACTIVE-DOCUMENTATION-3b82f6?style=for-the-badge&labelColor=0c0c0c&color=1e40af&logoColor=white)](https://sohaib1khan.github.io/dev_container/)
+
+**🚀 Active Development | 🛠️ 15+ Tools | 🗺️ Roadmap | 📦 One-Command Setup**
+
+*⚡ Continuously evolving • More tools coming • Always improving*
+
+---
+
+</div>
+
 ## 📌 **Overview**
 
 This project provides a **fully equipped development container** (`dev-container`) using **Docker and Docker Compose**. The container includes **essential DevOps tools** such as:
